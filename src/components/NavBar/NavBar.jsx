@@ -1,10 +1,11 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import { AppBar, IconButton, Toolbar, Drawer, Button, Avatar, useMediaQuery } from '@mui/material'
 import { Menu, AccountCircle, Brightness4, Brightness7 } from '@mui/icons-material'
 import { Link } from 'react-router-dom'
 import { useTheme } from '@mui/material'
+import { createSessionId, fetchToken, moviesApi } from '../../utils'
 
-import { SideBar } from '../'
+import { SideBar, Search } from '../'
 import useStyles from './styles'
 
 const NavBar = () => {
@@ -12,7 +13,23 @@ const NavBar = () => {
   const classes = useStyles()
   const isMobile = useMediaQuery('(max-width:600px)')
   const theme = useTheme()
-  const isAuthenticated = true
+  const isAuthenticated = false
+
+  const token = localStorage.getItem('request_token')
+  const sessionIdFromStorage = localStorage.getItem('session_id')
+
+  useEffect(() => {
+    const logInUser = async () => {
+      if(token) {
+        if(sessionIdFromStorage) {
+          const { data: userData } = await moviesApi.get(`/account?session_id=${sessionIdFromStorage}`)
+        } else {
+          const sessionId = await createSessionId()
+          const { data: userData } = await moviesApi.get(`/account?session_id=${sessionId}`)
+        }
+      }
+    }
+  }, [token])
 
   return (
     <>
@@ -32,10 +49,10 @@ const NavBar = () => {
           <IconButton color='inherit' sx={{ ml: 1 }} onClick={() => {}}>
             {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
           </IconButton>
-          {!isMobile && 'Search...'}
+          {!isMobile && <Search />}
           <div>
             {!isAuthenticated ? (
-              <Button color='inherit' onClick={() => {}}>
+              <Button color='inherit' onClick={fetchToken}>
                 Login &nbsp; <AccountCircle />
               </Button>
             ) : (
@@ -55,7 +72,7 @@ const NavBar = () => {
               </Button>
             )}
           </div>
-          {isMobile && 'Search...'}
+          {isMobile && <Search />}
         </Toolbar>
       </AppBar>
       <div>
