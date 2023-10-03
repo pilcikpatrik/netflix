@@ -4,16 +4,20 @@ import { Menu, AccountCircle, Brightness4, Brightness7 } from '@mui/icons-materi
 import { Link } from 'react-router-dom'
 import { useTheme } from '@mui/material'
 import { createSessionId, fetchToken, moviesApi } from '../../utils'
+import { useDispatch, useSelector } from 'react-redux'
+
+import { setUser, userSelector } from '../../features/auth'
 
 import { SideBar, Search } from '../'
 import useStyles from './styles'
 
 const NavBar = () => {
+  const { isAuthenticated, user } = useSelector(userSelector)
   const [mobileOpen, setMobileOpen] = useState(false)
   const classes = useStyles()
   const isMobile = useMediaQuery('(max-width:600px)')
   const theme = useTheme()
-  const isAuthenticated = false
+  const dispatch = useDispatch()
 
   const token = localStorage.getItem('request_token')
   const sessionIdFromStorage = localStorage.getItem('session_id')
@@ -23,12 +27,16 @@ const NavBar = () => {
       if(token) {
         if(sessionIdFromStorage) {
           const { data: userData } = await moviesApi.get(`/account?session_id=${sessionIdFromStorage}`)
+          dispatch(setUser(userData))
         } else {
           const sessionId = await createSessionId()
           const { data: userData } = await moviesApi.get(`/account?session_id=${sessionId}`)
+          dispatch(setUser(userData))
         }
       }
     }
+
+    logInUser()
   }, [token])
 
   return (
@@ -59,7 +67,7 @@ const NavBar = () => {
               <Button 
                 color='inherit'
                 component={Link}
-                to='/profile/:id'
+                to={`/profile/${user.id}`}
                 className={classes.linkButton}
                 onClick={() => {}}
               >
